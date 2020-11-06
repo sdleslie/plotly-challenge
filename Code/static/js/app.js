@@ -1,19 +1,23 @@
-const path = "./samples.json";
+const path = "./data/samples.json";
 
 var datastore
 
+palletes = ['Electric','Default','Picnic','Greens','Jet','Portland']
+
 d3.json(path).then(function(data) {
     datastore = data
-    //console.log(data)
+    console.log(data)
     populateSelectElement(d3.select("#selDataset"),data.names)
+    populateSelectElement(d3.select("#bubbleColors"),palletes)
     samples=data.samples
     update()
 });
 
 function update() {
     var selected = d3.select("#selDataset").property("value");
+    var pallette = d3.select("#bubbleColors").property("value");
     demopanel(selected);
-    charts(selected);
+    charts(selected, pallette);
 }
 
 function populateSelectElement (element, names) {
@@ -34,7 +38,7 @@ function demopanel(selected) {
     )
 }
 
-function charts(selected) {
+function charts(selected, pallette) {
     chartdata = samples.filter((row)=>{return row.id == selected})[0];
     sample_values = chartdata.sample_values;
     otu_ids = chartdata.otu_ids;
@@ -42,7 +46,8 @@ function charts(selected) {
 
     var trace1 = [{
         x: sample_values.slice(0,10).reverse(),
-        y: otu_ids.slice(0,10).map(item=>`OTU ${item}`).reverse(),
+        y: otu_ids.slice(0,10).map(item=>`OTU ${item} `).reverse(),
+        text: otu_labels,
         type: "bar",
         orientation: "h"
       }];
@@ -52,11 +57,20 @@ function charts(selected) {
     var trace2 = [{
         x: otu_ids,
         y: sample_values,
-        marker:{size:sample_values},
-        mode: "markers"
+        text: otu_labels,
+        mode: "markers",
+        marker: {
+            size:sample_values,
+            color: otu_ids,
+            // colorscale: 'YlGnBu'
+            // colorscale: 'RdBu'
+            // colorscale: 'Picnic'
+            colorscale: pallette,
+            opacity: .707
+        }
         
       }];
-    layout2 = {title: "Bad Bubble"};
+    layout2 = {title: "Bubble size: number of samples"};
       Plotly.newPlot("bubble", trace2, layout2);
 
       // console.log(chartdata)
@@ -66,3 +80,8 @@ function charts(selected) {
 d3.select("#selDataset").on("click", function() {
     update()
 })
+
+d3.select("#bubbleColors").on("click", function() {
+    update()
+})
+
